@@ -24,7 +24,9 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@ui/*":["src/ui/*"]
+      "@ui/*":["src/ui/*"],
+      "@db-crud-todos":["core/crud.ts"],
+      "@server/*":["src/server/*"]
     }
   },
   "include": [
