@@ -12,22 +12,20 @@ function get({
     page,
     limit,
 }: TodoRepositoryGetParams): Promise<TodoRepositoryGetOutPut> {
-    return fetch("/api/todos").then(async (respServer) => {
-        const todosString = await respServer.text();
-        const todosFromServer = JSON.parse(todosString).todos;
+    return fetch(`/api/todos?page=${page}&limit=${limit}`).then(
+        async (respServer) => {
+            const todosString = await respServer.text();
+            const responseParsed = parseTodosFromServer(
+                JSON.parse(todosString)
+            );
 
-        const ALL_TODOS = todosFromServer;
-        const startIndex = (page - 1) * limit;
-        const endIndex = page * limit;
-        const paginatedTodos = ALL_TODOS.slice(startIndex, endIndex);
-        const totalPages = Math.ceil(ALL_TODOS.length / limit);
-
-        return {
-            todos: paginatedTodos,
-            total: ALL_TODOS.length,
-            pages: totalPages,
-        };
-    });
+            return {
+                todos: responseParsed.todos,
+                total: responseParsed.total,
+                pages: responseParsed.pages,
+            };
+        }
+    );
 }
 
 export const todoRepository = {
@@ -40,4 +38,44 @@ interface Todo {
     content: string;
     date: Date;
     done: boolean;
+}
+
+function parseTodosFromServer(responseBody: unknown): {
+    total: number;
+    pages: number;
+    todos: Array<Todo>;
+} {
+    if (
+        responseBody !== null &&
+        typeof responseBody === "object" &&
+        "todos" in responseBody &&
+        "total" in responseBody &&
+        "pages" in responseBody &&
+        Array.isArray(responseBody.todos)
+    ) {
+        return {
+            total: Number(responseBody.total),
+            pages: Number(responseBody.pages),
+            todos: responseBody.todos.map((todo: unknown) => {
+                if (todo === null && typeof todo !== "object") {
+                    throw new Error("Invalid todo from API");
+                }
+
+                const { id, content, done, date } = todo as {
+                    id: string;
+                    content: string;
+                    date: string;
+                    done: string;
+                };
+                return {
+                    id,
+                    content,
+                    done: String(done).toLowerCase() === "true",
+                    date: new Date(date),
+                };
+            }),
+        };
+    }
+
+    return { pages: 1, total: 0, todos: [] };
 }
