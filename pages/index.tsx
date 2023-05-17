@@ -4,7 +4,7 @@ import { todoController } from "@ui/controller/todos";
 
 const bg = "/bg.jpg";
 
-interface HomePageProps {
+interface HomeTodo {
     id: string;
     content: string;
 }
@@ -13,10 +13,16 @@ function HomePage() {
     const [initialLoadComplete, setInitialLoadComplete] = useState(false);
     const [totalPages, setTotalPages] = useState(0);
     const [page, setPage] = useState(1);
+    const [search, setSearch] = useState("");
     const [isLoading, setIsLoading] = useState(true);
-    const [todos, setTodos] = useState<HomePageProps[]>([]);
+    const [todos, setTodos] = useState<HomeTodo[]>([]);
 
-    const hasNoTodos = todos.length === 0 && !isLoading;
+    const homeTodos = todoController.filterTodosByContent<HomeTodo>(
+        search,
+        todos
+    );
+
+    const hasNoTodos = homeTodos.length === 0 && !isLoading;
     const hasMorePages = totalPages > page;
 
     // infos page load
@@ -57,6 +63,9 @@ function HomePage() {
                     <input
                         type="text"
                         placeholder="Filtrar lista atual, ex: Dentista"
+                        onChange={(event) => {
+                            setSearch(event.target.value);
+                        }}
                     />
                 </form>
 
@@ -73,7 +82,7 @@ function HomePage() {
                     </thead>
 
                     <tbody>
-                        {todos.map((todo) => (
+                        {homeTodos.map((todo) => (
                             <tr key={todo.id}>
                                 <td>
                                     <input type="checkbox" />
